@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Products API</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            max-width: 600px; 
+            margin: 20px auto; 
+            padding: 20px; 
+        }
+        .product { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            margin: 5px 0; 
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 8px 12px; 
+            margin: 5px; 
+            cursor: pointer;
+        }
+        .delete { 
+            background: #dc3545; 
+        }
+        input { 
+            padding: 8px; 
+            margin: 5px; 
+            width: 200px; 
+        }
+        #response { 
+            background: #f5f5f5; 
+            padding: 10px; 
+            margin-top: 10px; 
+            font-family: monospace; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Управление товарами</h1>
+    
+    <div>
+        <button onclick="getProducts()">Обновить список</button>
+        <div id="products">Загрузка...</div>
+    </div>
+    
+    <h3>Добавить товар</h3>
+    <input id="newName" placeholder="Название">
+    <input id="newPrice" placeholder="Цена" type="number">
+    <button onclick="addProduct()">Добавить</button>
+    
+    <h3>Тест API</h3>
+    <button onclick="getProduct(1)">Получить ID=1</button>
+    <button onclick="createTest()">Создать тестовый</button>
+    <button onclick="updateProduct()">Обновить ID=1</button>
+    <button onclick="deletePrompt()">Удалить по ID</button>
+    
+    <h3>Ответ сервера</h3>
+    <button onclick="clearResponse()">Очистить</button>
+    <pre id="response">Готов к работе</pre>
+
+    <script>
+        const API = 'http://localhost:3000/products';
+        
+        function showResponse(data) {
+            document.getElementById('response').textContent = 
+                typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+        }
+        
+        async function getProducts() {
+            try {
+                const res = await fetch(API);
+                const data = await res.json();
+                
+                let html = '';
+                if (data.data?.length) {
+                    data.data.forEach(p => {
+                        html += `<div class="product">
+                            ID: ${p.id}, Название: ${p.name}, Цена: ${p.price} руб.
+                            <button class="delete" onclick="deleteProduct(${p.id})">Удалить</button>
+                        </div>`;
+                    });
+                } else {
+                    html = 'Нет товаров';
+                }
+                
+                document.getElementById('products').innerHTML = html;
+                showResponse(data);
+            } catch {
+                showResponse('Ошибка подключения');
+                document.getElementById('products').innerHTML = 'Ошибка загрузки';
+            }
+        }
+        
+        async function addProduct() {
+            const name = document.getElementById('newName').value;
+            const price = document.getElementById('newPrice').value;
+            
+            if (!name || !price) return alert('Заполните поля');
+            
+            try {
+                const res = await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, price: Number(price) })
+                });
+                
+                showResponse(await res.json());
+                document.getElementById('newName').value = '';
+                document.getElementById('newPrice').value = '';
+                getProducts();
+            } catch {
+                showResponse('Ошибка добавления');
+            }
+        }
+        
+        async function getProduct(id) {
+            try {
+                const res = await fetch(`${API}/${id}`);
+                showResponse(await res.json());
+            } catch {
+                showResponse('Ошибка получения');
+            }
+        }
+        
+        async function createTest() {
+            const product = { 
+                name: 'Тест ' + Math.floor(Math.random() * 1000), 
+                price: Math.floor(Math.random() * 10000) 
+            };
+            
+            try {
+                const res = await fetch(API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(product)
+                });
+                showResponse(await res.json());
+                getProducts();
+            } catch {
+                showResponse('Ошибка создания');
+            }
+        }
+        
+        async function updateProduct() {
+            const updates = { 
+                name: 'Обновленный ' + Math.floor(Math.random() * 100),
+                price: Math.floor(Math.random() * 10000) 
+            };
+            
+            try {
+                const res = await fetch(`${API}/1`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+                showResponse(await res.json());
+                getProducts();
+            } catch {
+                showResponse('Ошибка обновления');
+            }
+        }
+        
+        async function deleteProduct(id) {
+            if (!confirm(`Удалить товар ${id}?`)) return;
+            
+            try {
+                const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+                showResponse(await res.json());
+                getProducts();
+            } catch {
+                showResponse('Ошибка удаления');
+            }
+        }
+        
+        function deletePrompt() {
+            const id = prompt('Введите ID товара:');
+            if (id) deleteProduct(id);
+        }
+        
+        function clearResponse() {
+            document.getElementById('response').textContent = 'Очищено';
+        }
+        
+        // загрузка товаров
+        getProducts();
+    </script>
+</body>
+</html>
