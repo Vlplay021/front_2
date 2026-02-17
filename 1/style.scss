@@ -1,7 +1,7 @@
 $main-color: #3498db;
 $text-color: #333;
 
-/* Для стиля кнопок */
+// Для стиля кнопок
 @mixin button-style($color) {
     background: $color;
     color: white;
