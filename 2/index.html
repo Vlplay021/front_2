@@ -63,12 +63,12 @@
 
     <script>
         const API = 'http://localhost:3000/products';
-        
+        // ответ сервера
         function showResponse(data) {
             document.getElementById('response').textContent = 
                 typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
         }
-        
+        // получение всех товаров
         async function getProducts() {
             try {
                 const res = await fetch(API);
@@ -93,7 +93,7 @@
                 document.getElementById('products').innerHTML = 'Ошибка загрузки';
             }
         }
-        
+        // добавить продукт
         async function addProduct() {
             const name = document.getElementById('newName').value;
             const price = document.getElementById('newPrice').value;
@@ -115,7 +115,7 @@
                 showResponse('Ошибка добавления');
             }
         }
-        
+        // получить продукт
         async function getProduct(id) {
             try {
                 const res = await fetch(`${API}/${id}`);
@@ -124,7 +124,7 @@
                 showResponse('Ошибка получения');
             }
         }
-        
+        // сделать тестовый товар
         async function createTest() {
             const product = { 
                 name: 'Тест ' + Math.floor(Math.random() * 1000), 
@@ -143,7 +143,7 @@
                 showResponse('Ошибка создания');
             }
         }
-        
+        // обновить продукт
         async function updateProduct() {
             const updates = { 
                 name: 'Обновленный ' + Math.floor(Math.random() * 100),
@@ -162,7 +162,7 @@
                 showResponse('Ошибка обновления');
             }
         }
-        
+        // удалить продукт
         async function deleteProduct(id) {
             if (!confirm(`Удалить товар ${id}?`)) return;
             
