@@ -7,16 +7,106 @@ const port = 3000;
 
 // Начальные товары 10
 let products = [
-  { id: nanoid(6), name: 'Ноутбук', category: 'Электроника', description: 'Мощный игровой ноутбук', price: 1200, stock: 5, rating: 4.5, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Смартфон', category: 'Электроника', description: 'Последняя модель', price: 800, stock: 10, rating: 4.7, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Книга', category: 'Книги', description: 'Фантастика', price: 15, stock: 50, rating: 4.2, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Футболка', category: 'Одежда', description: 'Хлопок', price: 20, stock: 30, rating: 4.0, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Кроссовки', category: 'Обувь', description: 'Беговые', price: 100, stock: 15, rating: 4.6, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Кофеварка', category: 'Техника', description: 'Капельная', price: 80, stock: 7, rating: 4.3, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Наушники', category: 'Аудио', description: 'Беспроводные', price: 150, stock: 12, rating: 4.8, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Рюкзак', category: 'Аксессуары', description: 'Для ноутбука', price: 50, stock: 20, rating: 4.4, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Планшет', category: 'Электроника', description: 'Для рисования', price: 600, stock: 3, rating: 4.5, image: 'https://via.placeholder.com/150' },
-  { id: nanoid(6), name: 'Игра', category: 'Игры', description: 'Приключения', price: 60, stock: 8, rating: 4.9, image: 'https://via.placeholder.com/150' }
+	{
+		id: nanoid(6),
+		name: 'Ноутбук',
+		category: 'Электроника',
+		description: 'Мощный игровой ноутбук',
+		price: 1200,
+		stock: 5,
+		rating: 4.5,
+		image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Смартфон',
+		category: 'Электроника',
+		description: 'Последняя модель',
+		price: 800,
+		stock: 10,
+		rating: 4.7,
+		image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Книга',
+		category: 'Книги',
+		description: 'Фантастика',
+		price: 15,
+		stock: 50,
+		rating: 4.2,
+		image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Футболка',
+		category: 'Одежда',
+		description: 'Хлопок',
+		price: 20,
+		stock: 30,
+		rating: 4.0,
+		image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Кроссовки',
+		category: 'Обувь',
+		description: 'Беговые',
+		price: 100,
+		stock: 15,
+		rating: 4.6,
+		image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Кофеварка',
+		category: 'Техника',
+		description: 'Капельная',
+		price: 80,
+		stock: 7,
+		rating: 4.3,
+		image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Наушники',
+		category: 'Аудио',
+		description: 'Беспроводные',
+		price: 150,
+		stock: 12,
+		rating: 4.8,
+		image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Рюкзак',
+		category: 'Аксессуары',
+		description: 'Для ноутбука',
+		price: 50,
+		stock: 20,
+		rating: 4.4,
+		image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Планшет',
+		category: 'Электроника',
+		description: 'Для рисования',
+		price: 600,
+		stock: 3,
+		rating: 4.5,
+		image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&fit=crop'
+	},
+	{
+		id: nanoid(6),
+		name: 'Игра',
+		category: 'Игры',
+		description: 'Приключения',
+		price: 60,
+		stock: 8,
+		rating: 4.9,
+		image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=300&fit=crop'
+	},
 ];
 
 app.use(express.json());

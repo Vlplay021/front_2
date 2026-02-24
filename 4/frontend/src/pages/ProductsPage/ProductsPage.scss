@@ -233,3 +233,12 @@ $dangerBg: rgba(239, 68, 68, 0.12);
   color: inherit;
   outline: none;
 }
+
+.productImage {
+	width: 65px;
+	height: 65px;
+	border-radius: 8px;
+	object-fit: cover;
+	flex-shrink: 0;
+	border: 1px solid $border;
+}

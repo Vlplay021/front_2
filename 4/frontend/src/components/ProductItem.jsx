@@ -3,6 +3,11 @@ import React from 'react';
 export default function ProductItem({ product, onEdit, onDelete }) {
   return (
     <div className="productRow">
+	    <img
+		    className="productImage"
+		    src={product.image || 'https://via.placeholder.com/150'}
+		    alt={product.name}
+	    />
       <div className="productMain">
         <div className="productId">#{product.id}</div>
         <div className="productName">{product.name}</div>
