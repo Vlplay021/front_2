@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин + Авторизация</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-top: 0; }
+        input, textarea, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; font-size: 0.9em; margin-bottom: 10px; }
+        .success { color: green; font-size: 0.9em; margin-bottom: 10px; }
+        .product-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .product-item:last-child { border-bottom: none; }
+        .token-info { word-break: break-all; background: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 0.8em; margin: 10px 0; }
+        .user-info { background: #e8f4fd; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
+        hr { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Магазин</h1>
+
+    <!-- Регистрация и вход -->
+    <div class="container">
+        <h2>Регистрация</h2>
+        <form id="registerForm">
+            <input type="email" id="regEmail" placeholder="Email" required>
+            <input type="text" id="regFirstName" placeholder="Имя" required>
+            <input type="text" id="regLastName" placeholder="Фамилия" required>
+            <input type="password" id="regPassword" placeholder="Пароль" required>
+            <button type="submit">Зарегистрироваться</button>
+            <div id="registerMessage"></div>
+        </form>
+
+        <hr>
+
+        <h2>Вход</h2>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" required>
+            <input type="password" id="loginPassword" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+            <div id="loginMessage"></div>
+        </form>
+    </div>
+
+    <!-- Информация о текущем пользователе (появляется после входа) -->
+    <div class="container" id="userSection" style="display: none;">
+        <h2>Текущий пользователь</h2>
+        <div id="userInfo" class="user-info"></div>
+        <div class="token-info" id="tokenDisplay"></div>
+        <button id="logoutBtn">Выйти</button>
+    </div>
+
+    <!-- Управление товарами (доступно всем) -->
+    <div class="container">
+        <h2>Создать товар</h2>
+        <form id="createProductForm">
+            <input type="text" id="productTitle" placeholder="Название" required>
+            <input type="text" id="productCategory" placeholder="Категория" required>
+            <textarea id="productDescription" placeholder="Описание" required></textarea>
+            <input type="number" id="productPrice" placeholder="Цена" step="0.01" required>
+            <button type="submit">Создать товар</button>
+            <div id="createProductMessage"></div>
+        </form>
+
+        <h2>Список товаров</h2>
+        <button id="refreshProducts">Обновить список</button>
+        <div id="productsList"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000';
+
+        // Состояние: токен и данные пользователя
+        let accessToken = localStorage.getItem('accessToken') || null;
+        let currentUser = null;
+
+        // DOM элементы
+        const userSection = document.getElementById('userSection');
+        const userInfoDiv = document.getElementById('userInfo');
+        const tokenDisplay = document.getElementById('tokenDisplay');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        // Обновление интерфейса в зависимости от наличия токена
+        async function updateUserInterface() {
+            if (accessToken) {
+                tokenDisplay.textContent = `Токен: ${accessToken.substring(0, 50)}...`;
+                try {
+                    currentUser = await fetchCurrentUser();
+                    if (currentUser) {
+                        userInfoDiv.innerHTML = `
+                            <p><strong>ID:</strong> ${currentUser.id}</p>
+                            <p><strong>Email:</strong> ${currentUser.email}</p>
+                            <p><strong>Имя:</strong> ${currentUser.first_name} ${currentUser.last_name}</p>
+                        `;
+                        userSection.style.display = 'block';
+                    } else {
+                        accessToken = null;
+                        localStorage.removeItem('accessToken');
+                        userSection.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error('Ошибка получения пользователя', err);
+                    accessToken = null;
+                    localStorage.removeItem('accessToken');
+                    userSection.style.display = 'none';
+                }
+            } else {
+                userSection.style.display = 'none';
+                tokenDisplay.textContent = '';
+            }
+        }
+
+        // Запрос текущего пользователя (/api/auth/me)
+        async function fetchCurrentUser() {
+            if (!accessToken) return null;
+            const response = await fetch(`${API_BASE}/api/auth/me`, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Не удалось получить пользователя');
+            }
+            return await response.json();
+        }
+
+        // Регистрация
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const first_name = document.getElementById('regFirstName').value;
+            const last_name = document.getElementById('regLastName').value;
+            const password = document.getElementById('regPassword').value;
+
+            const msgDiv = document.getElementById('registerMessage');
+            msgDiv.className = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, first_name, last_name, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgDiv.className = 'success';
+                    msgDiv.textContent = 'Регистрация успешна! Теперь можно войти.';
+                    document.getElementById('registerForm').reset();
+                } else {
+                    msgDiv.className = 'error';
+                    msgDiv.textContent = data.error || 'Ошибка регистрации';
+                }
+            } catch (err) {
+                msgDiv.className = 'error';
+                msgDiv.textContent = 'Ошибка соединения с сервером';
+            }
+        });
+
+        // Вход
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            const msgDiv = document.getElementById('loginMessage');
+            msgDiv.className = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    accessToken = data.accessToken;
+                    localStorage.setItem('accessToken', accessToken);
+                    msgDiv.className = 'success';
+                    msgDiv.textContent = 'Вход выполнен успешно!';
+                    document.getElementById('loginForm').reset();
+                    await updateUserInterface();
+                    loadProducts();
+                } else {
+                    msgDiv.className = 'error';
+                    msgDiv.textContent = data.error || 'Ошибка входа';
+                }
+            } catch (err) {
+                msgDiv.className = 'error';
+                msgDiv.textContent = 'Ошибка соединения с сервером';
+            }
+        });
+
+        // Выход
+        logoutBtn.addEventListener('click', () => {
+            accessToken = null;
+            localStorage.removeItem('accessToken');
+            currentUser = null;
+            updateUserInterface();
+        });
+
+        // Создание товара
+        document.getElementById('createProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('productTitle').value;
+            const category = document.getElementById('productCategory').value;
+            const description = document.getElementById('productDescription').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+
+            const msgDiv = document.getElementById('createProductMessage');
+            msgDiv.className = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, category, description, price })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    msgDiv.className = 'success';
+                    msgDiv.textContent = 'Товар создан!';
+                    document.getElementById('createProductForm').reset();
+                    loadProducts();
+                } else {
+                    msgDiv.className = 'error';
+                    msgDiv.textContent = data.error || 'Ошибка создания товара';
+                }
+            } catch (err) {
+                msgDiv.className = 'error';
+                msgDiv.textContent = 'Ошибка соединения с сервером';
+            }
+        });
+
+        // Загрузка и отображение списка товаров
+        async function loadProducts() {
+            const productsDiv = document.getElementById('productsList');
+            productsDiv.innerHTML = 'Загрузка...';
+            try {
+                const res = await fetch(`${API_BASE}/api/products`);
+                if (!res.ok) throw new Error('Ошибка загрузки');
+                const products = await res.json();
+                if (products.length === 0) {
+                    productsDiv.innerHTML = '<p>Нет товаров</p>';
+                } else {
+                    productsDiv.innerHTML = products.map(p => `
+                        <div class="product-item">
+                            <strong>${p.title}</strong> (${p.category}) - ${p.price} ₽<br>
+                            <small>${p.description}</small><br>
+                            <em>ID: ${p.id}</em>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                productsDiv.innerHTML = '<p class="error">Ошибка загрузки товаров</p>';
+            }
+        }
+
+        // Кнопка обновления списка товаров
+        document.getElementById('refreshProducts').addEventListener('click', loadProducts);
+
+        // Инициализация при загрузке страницы
+        (async () => {
+            await updateUserInterface();
+            await loadProducts();
+        })();
+    </script>
+</body>
+</html>
