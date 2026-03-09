@@ -3,91 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин + Авторизация</title>
+    <title>Магазин + JWT авторизация</title>
+    <!-- Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-top: 0; }
-        input, textarea, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .error { color: red; font-size: 0.9em; margin-bottom: 10px; }
-        .success { color: green; font-size: 0.9em; margin-bottom: 10px; }
-        .product-item { border-bottom: 1px solid #eee; padding: 10px 0; }
-        .product-item:last-child { border-bottom: none; }
-        .token-info { word-break: break-all; background: #f0f0f0; padding: 5px; border-radius: 4px; font-size: 0.8em; margin: 10px 0; }
-        .user-info { background: #e8f4fd; padding: 10px; border-radius: 4px; margin-bottom: 10px; }
-        hr { margin: 20px 0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f7fb;
+            color: #1e293b;
+            padding: 2rem 1rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h1 i {
+            color: #3b82f6;
+            font-size: 2rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1e293b;
+        }
+
+        h2 i {
+            color: #3b82f6;
+            font-size: 1.4rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.3rem;
+            color: #334155;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border 0.15s, box-shadow 0.15s;
+            background: #fafafa;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+            background: white;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background 0.2s, transform 0.1s;
+            width: 100%;
+            border: 1px solid transparent;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: white;
+            color: #1e293b;
+            border-color: #e2e8f0;
+        }
+
+        button.secondary:hover {
+            background: #f8fafc;
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .message.success {
+            background: #e6f7e6;
+            color: #0e6245;
+        }
+
+        .message.error {
+            background: #fee9e7;
+            color: #b91c1c;
+        }
+
+        .user-card {
+            background: #eef2ff;
+            border-left: 5px solid #3b82f6;
+            padding: 1.2rem;
+            border-radius: 16px;
+            margin-bottom: 1rem;
+        }
+
+        .token-box {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .token-box i {
+            color: #fbbf24;
+        }
+
+        .product-list {
+            margin-top: 1.5rem;
+        }
+
+        .product-item {
+            background: #f9f9f9;
+            border-radius: 16px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid #eef2f6;
+            transition: background 0.2s;
+        }
+
+        .product-item:hover {
+            background: white;
+            border-color: #d1d9e6;
+        }
+
+        .product-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            background: #dcfce7;
+            color: #166534;
+            padding: 0.25rem 0.75rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .product-category {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 0.2rem 0.8rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            margin: 0.5rem 0;
+        }
+
+        .product-description {
+            color: #475569;
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
+        }
+
+        .product-id {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+
+        .logout-btn {
+            background: white;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            width: auto;
+            padding: 0.5rem 1.2rem;
+        }
+
+        .logout-btn:hover {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .small-note {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
     </style>
 </head>
 <body>
-    <h1>Магазин</h1>
-
-    <!-- Регистрация и вход -->
     <div class="container">
-        <h2>Регистрация</h2>
-        <form id="registerForm">
-            <input type="email" id="regEmail" placeholder="Email" required>
-            <input type="text" id="regFirstName" placeholder="Имя" required>
-            <input type="text" id="regLastName" placeholder="Фамилия" required>
-            <input type="password" id="regPassword" placeholder="Пароль" required>
-            <button type="submit">Зарегистрироваться</button>
-            <div id="registerMessage"></div>
-        </form>
+        <h1>
+            <i class="fas fa-store"></i>
+            Магазин с JWT авторизацией
+        </h1>
 
-        <hr>
+        <!-- Сетка для регистрации и входа -->
+        <div class="grid">
+            <!-- Карточка регистрации -->
+            <div class="card">
+                <h2><i class="fas fa-user-plus"></i> Регистрация</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="regFirstName" placeholder="Иван" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Фамилия</label>
+                        <input type="text" id="regLastName" placeholder="Иванов" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="regPassword" placeholder="******" required>
+                    </div>
+                    <button type="submit">
+                        <i class="fas fa-check-circle"></i> Зарегистрироваться
+                    </button>
+                    <div id="registerMessage" class="message"></div>
+                </form>
+            </div>
 
-        <h2>Вход</h2>
-        <form id="loginForm">
-            <input type="email" id="loginEmail" placeholder="Email" required>
-            <input type="password" id="loginPassword" placeholder="Пароль" required>
-            <button type="submit">Войти</button>
-            <div id="loginMessage"></div>
-        </form>
-    </div>
+            <!-- Карточка входа -->
+            <div class="card">
+                <h2><i class="fas fa-sign-in-alt"></i> Вход</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPassword" placeholder="******" required>
+                    </div>
+                    <button type="submit">
+                        <i class="fas fa-arrow-right-to-bracket"></i> Войти
+                    </button>
+                    <div id="loginMessage" class="message"></div>
+                </form>
+            </div>
+        </div>
 
-    <!-- Информация о текущем пользователе (появляется после входа) -->
-    <div class="container" id="userSection" style="display: none;">
-        <h2>Текущий пользователь</h2>
-        <div id="userInfo" class="user-info"></div>
-        <div class="token-info" id="tokenDisplay"></div>
-        <button id="logoutBtn">Выйти</button>
-    </div>
+        <!-- Блок текущего пользователя (появляется после входа) -->
+        <div class="card" id="userSection" style="display: none;">
+            <div class="flex-row" style="justify-content: space-between; align-items: center;">
+                <h2><i class="fas fa-user-circle"></i> Текущий пользователь</h2>
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+            <div id="userInfo" class="user-card"></div>
+            <div class="token-box" id="tokenDisplay">
+                <i class="fas fa-key"></i>
+                <span></span>
+            </div>
+            <div class="small-note">
+                <i class="fas fa-info-circle"></i> Токен автоматически подставляется в запросы к защищённым маршрутам.
+            </div>
+        </div>
 
-    <!-- Управление товарами (доступно всем) -->
-    <div class="container">
-        <h2>Создать товар</h2>
-        <form id="createProductForm">
-            <input type="text" id="productTitle" placeholder="Название" required>
-            <input type="text" id="productCategory" placeholder="Категория" required>
-            <textarea id="productDescription" placeholder="Описание" required></textarea>
-            <input type="number" id="productPrice" placeholder="Цена" step="0.01" required>
-            <button type="submit">Создать товар</button>
-            <div id="createProductMessage"></div>
-        </form>
+        <!-- Управление товарами -->
+        <div class="card">
+            <h2><i class="fas fa-cube"></i> Создать товар</h2>
+            <form id="createProductForm">
+                <div class="form-group">
+                    <label>Название</label>
+                    <input type="text" id="productTitle" placeholder="Смартфон" required>
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <input type="text" id="productCategory" placeholder="Электроника" required>
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea id="productDescription" rows="2" placeholder="Краткое описание..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Цена (₽)</label>
+                    <input type="number" id="productPrice" step="0.01" placeholder="1999.99" required>
+                </div>
+                <button type="submit">
+                    <i class="fas fa-plus-circle"></i> Добавить товар
+                </button>
+                <div id="createProductMessage" class="message"></div>
+            </form>
+        </div>
 
-        <h2>Список товаров</h2>
-        <button id="refreshProducts">Обновить список</button>
-        <div id="productsList"></div>
+        <!-- Список товаров -->
+        <div class="card">
+            <div class="flex-row" style="justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="margin-bottom: 0;"><i class="fas fa-list"></i> Каталог товаров</h2>
+                <button class="secondary" id="refreshProducts">
+                    <i class="fas fa-sync-alt"></i> Обновить
+                </button>
+            </div>
+            <div id="productsList" class="product-list">
+                <p style="color: #94a3b8; text-align: center;">Загрузка...</p>
+            </div>
+        </div>
     </div>
 
     <script>
         const API_BASE = 'http://localhost:3000';
 
-        // Состояние: токен и данные пользователя
+        // Состояние
         let accessToken = localStorage.getItem('accessToken') || null;
         let currentUser = null;
 
         // DOM элементы
         const userSection = document.getElementById('userSection');
         const userInfoDiv = document.getElementById('userInfo');
-        const tokenDisplay = document.getElementById('tokenDisplay');
+        const tokenSpan = document.querySelector('#tokenDisplay span');
         const logoutBtn = document.getElementById('logoutBtn');
 
-        // Обновление интерфейса в зависимости от наличия токена
+        // Утилита для обновления интерфейса
         async function updateUserInterface() {
             if (accessToken) {
-                tokenDisplay.textContent = `Токен: ${accessToken.substring(0, 50)}...`;
+                tokenSpan.textContent = accessToken.substring(0, 50) + '...';
                 try {
                     currentUser = await fetchCurrentUser();
                     if (currentUser) {
@@ -98,9 +426,7 @@
                         `;
                         userSection.style.display = 'block';
                     } else {
-                        accessToken = null;
-                        localStorage.removeItem('accessToken');
-                        userSection.style.display = 'none';
+                        throw new Error('No user');
                     }
                 } catch (err) {
                     console.error('Ошибка получения пользователя', err);
@@ -110,21 +436,16 @@
                 }
             } else {
                 userSection.style.display = 'none';
-                tokenDisplay.textContent = '';
+                tokenSpan.textContent = '';
             }
         }
 
-        // Запрос текущего пользователя (/api/auth/me)
         async function fetchCurrentUser() {
             if (!accessToken) return null;
             const response = await fetch(`${API_BASE}/api/auth/me`, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                }
+                headers: { 'Authorization': `Bearer ${accessToken}` }
             });
-            if (!response.ok) {
-                throw new Error('Не удалось получить пользователя');
-            }
+            if (!response.ok) throw new Error('Failed to fetch user');
             return await response.json();
         }
 
@@ -135,9 +456,8 @@
             const first_name = document.getElementById('regFirstName').value;
             const last_name = document.getElementById('regLastName').value;
             const password = document.getElementById('regPassword').value;
-
             const msgDiv = document.getElementById('registerMessage');
-            msgDiv.className = '';
+            msgDiv.className = 'message';
 
             try {
                 const res = await fetch(`${API_BASE}/api/auth/register`, {
@@ -147,16 +467,16 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    msgDiv.className = 'success';
-                    msgDiv.textContent = 'Регистрация успешна! Теперь можно войти.';
+                    msgDiv.classList.add('success');
+                    msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> Регистрация успешна! Теперь можно войти.';
                     document.getElementById('registerForm').reset();
                 } else {
-                    msgDiv.className = 'error';
-                    msgDiv.textContent = data.error || 'Ошибка регистрации';
+                    msgDiv.classList.add('error');
+                    msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.error || 'Ошибка регистрации'}`;
                 }
-            } catch (err) {
-                msgDiv.className = 'error';
-                msgDiv.textContent = 'Ошибка соединения с сервером';
+            } catch {
+                msgDiv.classList.add('error');
+                msgDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка соединения с сервером';
             }
         });
 
@@ -165,9 +485,8 @@
             e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-
             const msgDiv = document.getElementById('loginMessage');
-            msgDiv.className = '';
+            msgDiv.className = 'message';
 
             try {
                 const res = await fetch(`${API_BASE}/api/auth/login`, {
@@ -179,18 +498,18 @@
                 if (res.ok) {
                     accessToken = data.accessToken;
                     localStorage.setItem('accessToken', accessToken);
-                    msgDiv.className = 'success';
-                    msgDiv.textContent = 'Вход выполнен успешно!';
+                    msgDiv.classList.add('success');
+                    msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> Вход выполнен';
                     document.getElementById('loginForm').reset();
                     await updateUserInterface();
                     loadProducts();
                 } else {
-                    msgDiv.className = 'error';
-                    msgDiv.textContent = data.error || 'Ошибка входа';
+                    msgDiv.classList.add('error');
+                    msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.error || 'Ошибка входа'}`;
                 }
-            } catch (err) {
-                msgDiv.className = 'error';
-                msgDiv.textContent = 'Ошибка соединения с сервером';
+            } catch {
+                msgDiv.classList.add('error');
+                msgDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка соединения с сервером';
             }
         });
 
@@ -209,9 +528,8 @@
             const category = document.getElementById('productCategory').value;
             const description = document.getElementById('productDescription').value;
             const price = parseFloat(document.getElementById('productPrice').value);
-
             const msgDiv = document.getElementById('createProductMessage');
-            msgDiv.className = '';
+            msgDiv.className = 'message';
 
             try {
                 const res = await fetch(`${API_BASE}/api/products`, {
@@ -221,48 +539,51 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    msgDiv.className = 'success';
-                    msgDiv.textContent = 'Товар создан!';
+                    msgDiv.classList.add('success');
+                    msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> Товар создан';
                     document.getElementById('createProductForm').reset();
                     loadProducts();
                 } else {
-                    msgDiv.className = 'error';
-                    msgDiv.textContent = data.error || 'Ошибка создания товара';
+                    msgDiv.classList.add('error');
+                    msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.error || 'Ошибка'}`;
                 }
-            } catch (err) {
-                msgDiv.className = 'error';
-                msgDiv.textContent = 'Ошибка соединения с сервером';
+            } catch {
+                msgDiv.classList.add('error');
+                msgDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Ошибка соединения';
             }
         });
 
-        // Загрузка и отображение списка товаров
+        // Загрузка списка товаров
         async function loadProducts() {
             const productsDiv = document.getElementById('productsList');
-            productsDiv.innerHTML = 'Загрузка...';
+            productsDiv.innerHTML = '<p style="color:#94a3b8; text-align:center;">Загрузка...</p>';
             try {
                 const res = await fetch(`${API_BASE}/api/products`);
                 if (!res.ok) throw new Error('Ошибка загрузки');
                 const products = await res.json();
                 if (products.length === 0) {
-                    productsDiv.innerHTML = '<p>Нет товаров</p>';
+                    productsDiv.innerHTML = '<p style="color:#94a3b8; text-align:center;">🛒 Товаров пока нет</p>';
                 } else {
                     productsDiv.innerHTML = products.map(p => `
                         <div class="product-item">
-                            <strong>${p.title}</strong> (${p.category}) - ${p.price} ₽<br>
-                            <small>${p.description}</small><br>
-                            <em>ID: ${p.id}</em>
+                            <div class="product-title">
+                                <span>${p.title}</span>
+                                <span class="product-price">${p.price} ₽</span>
+                            </div>
+                            <div><span class="product-category">${p.category}</span></div>
+                            <div class="product-description">${p.description}</div>
+                            <div class="product-id">ID: ${p.id}</div>
                         </div>
                     `).join('');
                 }
-            } catch (err) {
-                productsDiv.innerHTML = '<p class="error">Ошибка загрузки товаров</p>';
+            } catch {
+                productsDiv.innerHTML = '<p class="error" style="text-align:center;"><i class="fas fa-exclamation-triangle"></i> Ошибка загрузки</p>';
             }
         }
 
-        // Кнопка обновления списка товаров
         document.getElementById('refreshProducts').addEventListener('click', loadProducts);
 
-        // Инициализация при загрузке страницы
+        // Инициализация
         (async () => {
             await updateUserInterface();
             await loadProducts();
