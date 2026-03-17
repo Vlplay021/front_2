@@ -22,11 +22,11 @@ h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; 
 .card:hover { transform: translateY(-4px); box-shadow: 0 20px 30px -10px rgba(0,0,0,0.1); }
 .form-group { margin-bottom: 1.2rem; }
 label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.3rem; color: #334155; }
-input, textarea {
+input, textarea, select {
   width: 100%; padding: 0.75rem 1rem; border: 1px solid #e2e8f0; border-radius: 12px;
   font-family: inherit; font-size: 1rem; background: #fafafa;
 }
-input:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); background: white; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); background: white; }
 button {
   background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 40px;
   font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -39,9 +39,23 @@ button.logout-btn:hover { background: #fee2e2; color: #991b1b; }
 .message.success { background: #e6f7e6; color: #0e6245; }
 .message.error { background: #fee9e7; color: #b91c1c; }
 .user-info { background: #eef2ff; border-left: 5px solid #3b82f6; padding: 1.2rem; border-radius: 16px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
-.product-item { background: #f9f9f9; border-radius: 16px; padding: 1rem; margin-bottom: 0.75rem; border: 1px solid #eef2f6; }
+.user-role {
+  background: #3b82f6;
+  color: white;
+  padding: 0.2rem 0.8rem;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+}
+.product-item, .user-item {
+  background: #f9f9f9;
+  border-radius: 16px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #eef2f6;
+}
 .product-title { font-weight: 600; font-size: 1.1rem; display: flex; justify-content: space-between; }
 .product-price { background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 40px; font-weight: 500; }
 .product-category { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.8rem; border-radius: 40px; font-size: 0.8rem; margin: 0.5rem 0; }
-.product-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
-.product-actions button { width: auto; padding: 0.4rem 1rem; font-size: 0.9rem; }
+.product-actions, .user-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+.product-actions button, .user-actions button { width: auto; padding: 0.4rem 1rem; font-size: 0.9rem; }

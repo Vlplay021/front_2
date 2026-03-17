@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Register from './components/Register';
 import Products from './components/Products';
+import Users from './components/Users';
 import LogoutButton from './components/LogoutButton';
 import api from './api';
 import './styles.css';
@@ -9,9 +10,9 @@ import './styles.css';
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showUsers, setShowUsers] = useState(false);
 
   useEffect(() => {
-    // При загрузке проверяем, есть ли accessToken, и получаем данные пользователя
     const token = localStorage.getItem('accessToken');
     if (token) {
       api.get('/api/auth/me')
@@ -37,6 +38,7 @@ function App() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     setUser(null);
+    setShowUsers(false);
   };
 
   if (loading) return <div className="container">Загрузка...</div>;
@@ -44,7 +46,7 @@ function App() {
   return (
     <div className="container">
       <h1>
-        <i className="fas fa-store"></i> Магазин с JWT + refresh
+        <i className="fas fa-store"></i> Магазин с JWT + refresh + RBAC
       </h1>
 
       {!user ? (
@@ -58,11 +60,23 @@ function App() {
         <>
           <div className="user-info">
             <p>
-              <strong>Пользователь:</strong> {user.first_name} {user.last_name} ({user.email})
+              <strong>Пользователь:</strong> {user.first_name} {user.last_name} ({user.email}) 
+              <span className="user-role"> Роль: {user.role}</span>
             </p>
             <LogoutButton onLogout={handleLogout} />
           </div>
-          <Products />
+          {user.role === 'admin' && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button onClick={() => setShowUsers(!showUsers)}>
+                {showUsers ? 'Скрыть пользователей' : 'Управление пользователями'}
+              </button>
+            </div>
+          )}
+          {showUsers && user.role === 'admin' ? (
+            <Users />
+          ) : (
+            <Products role={user.role} />
+          )}
         </>
       )}
     </div>

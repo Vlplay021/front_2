@@ -15,18 +15,19 @@ const ACCESS_EXPIRES_IN = '15m';
 const REFRESH_EXPIRES_IN = '7d';
 
 // Хранилища
-const users = [];
+let users = [];
 const products = [];
 const refreshTokens = new Set();
 
 // Вспомогательные функции
 const findUserByEmail = (email) => users.find(u => u.email === email);
+const findUserById = (id) => users.find(u => u.id === id);
 const findProductById = (id) => products.find(p => p.id === id);
 
 // Генерация токенов
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { sub: user.id, email: user.email },
+    { sub: user.id, email: user.email, role: user.role },
     ACCESS_SECRET,
     { expiresIn: ACCESS_EXPIRES_IN }
   );
@@ -34,13 +35,13 @@ const generateAccessToken = (user) => {
 
 const generateRefreshToken = (user) => {
   return jwt.sign(
-    { sub: user.id, email: user.email },
+    { sub: user.id, email: user.email, role: user.role },
     REFRESH_SECRET,
     { expiresIn: REFRESH_EXPIRES_IN }
   );
 };
 
-// Middleware для проверки access-токена
+// Middleware для проверки access-токена и загрузки пользователя
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization || '';
   const [scheme, token] = authHeader.split(' ');
@@ -51,12 +52,71 @@ function authMiddleware(req, res, next) {
 
   try {
     const payload = jwt.verify(token, ACCESS_SECRET);
-    req.user = payload;
+    const user = findUserById(payload.sub);
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'User not found or inactive' });
+    }
+    const { passwordHash, ...userWithoutPassword } = user;
+    req.user = userWithoutPassword;
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired access token' });
   }
 }
+
+// Middleware для проверки ролей
+function roleMiddleware(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden: insufficient role' });
+    }
+    next();
+  };
+}
+
+// Инициализация тестовых пользователей
+async function initUsers() {
+  if (users.length === 0) {
+    const saltRounds = 10;
+    const adminHash = await bcrypt.hash('admin123', saltRounds);
+    const sellerHash = await bcrypt.hash('seller123', saltRounds);
+    const userHash = await bcrypt.hash('user123', saltRounds);
+
+    users.push(
+      {
+        id: nanoid(),
+        email: 'admin@example.com',
+        first_name: 'Admin',
+        last_name: 'User',
+        passwordHash: adminHash,
+        role: 'admin',
+        active: true,
+      },
+      {
+        id: nanoid(),
+        email: 'seller@example.com',
+        first_name: 'Seller',
+        last_name: 'User',
+        passwordHash: sellerHash,
+        role: 'seller',
+        active: true,
+      },
+      {
+        id: nanoid(),
+        email: 'user@example.com',
+        first_name: 'Regular',
+        last_name: 'User',
+        passwordHash: userHash,
+        role: 'user',
+        active: true,
+      }
+    );
+  }
+}
+initUsers();
 
 // ---------- Auth endpoints ----------
 app.post('/api/auth/register', async (req, res) => {
@@ -77,6 +137,8 @@ app.post('/api/auth/register', async (req, res) => {
     first_name,
     last_name,
     passwordHash,
+    role: 'user',
+    active: true,
   };
   users.push(newUser);
 
@@ -92,7 +154,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const user = findUserByEmail(email);
-  if (!user) {
+  if (!user || !user.active) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
@@ -121,12 +183,11 @@ app.post('/api/auth/refresh', (req, res) => {
 
   try {
     const payload = jwt.verify(refreshToken, REFRESH_SECRET);
-    const user = users.find(u => u.id === payload.sub);
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+    const user = findUserById(payload.sub);
+    if (!user || !user.active) {
+      return res.status(401).json({ error: 'User not found or inactive' });
     }
 
-    // Ротация refresh-токена
     refreshTokens.delete(refreshToken);
     const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
@@ -139,7 +200,20 @@ app.post('/api/auth/refresh', (req, res) => {
 });
 
 app.get('/api/auth/me', authMiddleware, (req, res) => {
-  const user = users.find(u => u.id === req.user.sub);
+  res.json(req.user);
+});
+
+// ---------- User endpoints (только для админа) ----------
+app.get('/api/users', authMiddleware, roleMiddleware(['admin']), (req, res) => {
+  const usersWithoutPass = users.map(u => {
+    const { passwordHash, ...rest } = u;
+    return rest;
+  });
+  res.json(usersWithoutPass);
+});
+
+app.get('/api/users/:id', authMiddleware, roleMiddleware(['admin']), (req, res) => {
+  const user = findUserById(req.params.id);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
@@ -147,8 +221,41 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json(userWithoutPassword);
 });
 
-// ---------- Products endpoints (доступны без аутентификации для простоты) ----------
-app.post('/api/products', (req, res) => {
+app.put('/api/users/:id', authMiddleware, roleMiddleware(['admin']), async (req, res) => {
+  const user = findUserById(req.params.id);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const { first_name, last_name, email, role } = req.body;
+  if (first_name !== undefined) user.first_name = first_name;
+  if (last_name !== undefined) user.last_name = last_name;
+  if (email !== undefined) {
+    const existingUser = findUserByEmail(email);
+    if (existingUser && existingUser.id !== user.id) {
+      return res.status(409).json({ error: 'Email already in use' });
+    }
+    user.email = email;
+  }
+  if (role !== undefined && ['user', 'seller', 'admin'].includes(role)) {
+    user.role = role;
+  }
+
+  const { passwordHash, ...userWithoutPassword } = user;
+  res.json(userWithoutPassword);
+});
+
+app.delete('/api/users/:id', authMiddleware, roleMiddleware(['admin']), (req, res) => {
+  const user = findUserById(req.params.id);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  user.active = false;
+  res.status(204).send();
+});
+
+// ---------- Products endpoints ----------
+app.post('/api/products', authMiddleware, roleMiddleware(['seller', 'admin']), (req, res) => {
   const { title, category, description, price } = req.body;
   if (!title || !category || !description || price === undefined) {
     return res.status(400).json({ error: 'All fields are required' });
@@ -164,17 +271,17 @@ app.post('/api/products', (req, res) => {
   res.status(201).json(newProduct);
 });
 
-app.get('/api/products', (req, res) => {
+app.get('/api/products', authMiddleware, roleMiddleware(['user', 'seller', 'admin']), (req, res) => {
   res.json(products);
 });
 
-app.get('/api/products/:id', (req, res) => {
+app.get('/api/products/:id', authMiddleware, roleMiddleware(['user', 'seller', 'admin']), (req, res) => {
   const product = findProductById(req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
   res.json(product);
 });
 
-app.put('/api/products/:id', (req, res) => {
+app.put('/api/products/:id', authMiddleware, roleMiddleware(['seller', 'admin']), (req, res) => {
   const product = findProductById(req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
 
@@ -187,7 +294,7 @@ app.put('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-app.delete('/api/products/:id', (req, res) => {
+app.delete('/api/products/:id', authMiddleware, roleMiddleware(['admin']), (req, res) => {
   const index = products.findIndex(p => p.id === req.params.id);
   if (index === -1) return res.status(404).json({ error: 'Product not found' });
   products.splice(index, 1);

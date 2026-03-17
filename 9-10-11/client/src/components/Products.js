@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api';
 import CreateProduct from './CreateProduct';
 
-function Products() {
+function Products({ role }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -49,6 +49,10 @@ function Products() {
 
   if (loading) return <p>Загрузка товаров...</p>;
 
+  const canCreate = role === 'seller' || role === 'admin';
+  const canEdit = role === 'seller' || role === 'admin';
+  const canDelete = role === 'admin';
+
   return (
     <div className="card">
       <h2><i className="fas fa-cubes"></i> Товары</h2>
@@ -93,7 +97,7 @@ function Products() {
           </form>
         </div>
       ) : (
-        <CreateProduct onProductCreated={loadProducts} />
+        canCreate && <CreateProduct onProductCreated={loadProducts} />
       )}
 
       <div className="product-list">
@@ -109,10 +113,12 @@ function Products() {
               <div className="product-category">{p.category}</div>
               <div className="product-description">{p.description}</div>
               <div className="product-id">ID: {p.id}</div>
-              <div className="product-actions">
-                <button onClick={() => handleEdit(p)}>Редактировать</button>
-                <button onClick={() => handleDelete(p.id)}>Удалить</button>
-              </div>
+              {(canEdit || canDelete) && (
+                <div className="product-actions">
+                  {canEdit && <button onClick={() => handleEdit(p)}>Редактировать</button>}
+                  {canDelete && <button onClick={() => handleDelete(p.id)}>Удалить</button>}
+                </div>
+              )}
             </div>
           ))
         )}
