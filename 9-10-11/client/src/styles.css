@@ -54,6 +54,17 @@ button.logout-btn:hover { background: #fee2e2; color: #991b1b; }
   margin-bottom: 0.75rem;
   border: 1px solid #eef2f6;
 }
+.product-image {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+.product-image img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
 .product-title { font-weight: 600; font-size: 1.1rem; display: flex; justify-content: space-between; }
 .product-price { background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 40px; font-weight: 500; }
 .product-category { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.8rem; border-radius: 40px; font-size: 0.8rem; margin: 0.5rem 0; }

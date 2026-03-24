@@ -92,6 +92,12 @@ function Products({ role }) {
               placeholder="Цена"
               required
             />
+            <input
+              type="text"
+              value={editingProduct.imageUrl || ''}
+              onChange={e => setEditingProduct({ ...editingProduct, imageUrl: e.target.value })}
+              placeholder="URL картинки"
+            />
             <button type="submit">Сохранить</button>
             <button type="button" onClick={() => setEditingProduct(null)}>Отмена</button>
           </form>
@@ -106,6 +112,11 @@ function Products({ role }) {
         ) : (
           products.map(p => (
             <div key={p.id} className="product-item">
+              {p.imageUrl && (
+                <div className="product-image">
+                  <img src={p.imageUrl} alt={p.title} />
+                </div>
+              )}
               <div className="product-title">
                 <span>{p.title}</span>
                 <span className="product-price">{p.price} ₽</span>

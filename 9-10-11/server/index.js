@@ -145,7 +145,7 @@ const swaggerOptions = {
       },
     },
   },
-  apis: ['./index.js'], // путь к текущему файлу
+  apis: ['./index.js'],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
@@ -638,6 +638,9 @@ app.delete('/api/users/:id', authMiddleware, roleMiddleware(['admin']), (req, re
  *                 type: string
  *               price:
  *                 type: number
+ *               imageUrl:
+ *                 type: string
+ *                 description: URL картинки товара
  *     responses:
  *       201:
  *         description: Product created
@@ -656,6 +659,8 @@ app.delete('/api/users/:id', authMiddleware, roleMiddleware(['admin']), (req, re
  *                   type: string
  *                 price:
  *                   type: number
+ *                 imageUrl:
+ *                   type: string
  *       400:
  *         description: Missing required fields
  *       401:
@@ -664,7 +669,7 @@ app.delete('/api/users/:id', authMiddleware, roleMiddleware(['admin']), (req, re
  *         description: Forbidden
  */
 app.post('/api/products', authMiddleware, roleMiddleware(['seller', 'admin']), (req, res) => {
-  const { title, category, description, price } = req.body;
+  const { title, category, description, price, imageUrl } = req.body;
   if (!title || !category || !description || price === undefined) {
     return res.status(400).json({ error: 'All fields are required' });
   }
@@ -674,6 +679,7 @@ app.post('/api/products', authMiddleware, roleMiddleware(['seller', 'admin']), (
     category,
     description,
     price: Number(price),
+    imageUrl: imageUrl || '',
   };
   products.push(newProduct);
   res.status(201).json(newProduct);
@@ -707,6 +713,8 @@ app.post('/api/products', authMiddleware, roleMiddleware(['seller', 'admin']), (
  *                     type: string
  *                   price:
  *                     type: number
+ *                   imageUrl:
+ *                     type: string
  *       401:
  *         description: Unauthorized
  */
@@ -747,6 +755,8 @@ app.get('/api/products', authMiddleware, roleMiddleware(['user', 'seller', 'admi
  *                   type: string
  *                 price:
  *                   type: number
+ *                 imageUrl:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *       404:
@@ -788,6 +798,8 @@ app.get('/api/products/:id', authMiddleware, roleMiddleware(['user', 'seller', '
  *                 type: string
  *               price:
  *                 type: number
+ *               imageUrl:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Updated product
@@ -806,6 +818,8 @@ app.get('/api/products/:id', authMiddleware, roleMiddleware(['user', 'seller', '
  *                   type: string
  *                 price:
  *                   type: number
+ *                 imageUrl:
+ *                   type: string
  *       401:
  *         description: Unauthorized
  *       403:
@@ -817,11 +831,12 @@ app.put('/api/products/:id', authMiddleware, roleMiddleware(['seller', 'admin'])
   const product = findProductById(req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
 
-  const { title, category, description, price } = req.body;
+  const { title, category, description, price, imageUrl } = req.body;
   if (title !== undefined) product.title = title;
   if (category !== undefined) product.category = category;
   if (description !== undefined) product.description = description;
   if (price !== undefined) product.price = Number(price);
+  if (imageUrl !== undefined) product.imageUrl = imageUrl;
 
   res.json(product);
 });
