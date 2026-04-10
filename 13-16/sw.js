@@ -16,8 +16,8 @@ const STATIC_ASSETS = [
   '/icons/icon-152x152.png'
 ];
 
-// Установка – кэшируем статику
 self.addEventListener('install', event => {
+  console.log('SW install');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
@@ -25,8 +25,8 @@ self.addEventListener('install', event => {
   );
 });
 
-// Активация – удаляем старые кэши
 self.addEventListener('activate', event => {
+  console.log('SW activate');
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
@@ -37,10 +37,9 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Стратегии загрузки: статика – Cache First, контент – Network First
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return;
+  if (url.origin !== self.location.origin) return;
 
   if (url.pathname.startsWith('/content/')) {
     event.respondWith(
@@ -52,9 +51,10 @@ self.addEventListener('fetch', event => {
           });
           return networkRes;
         })
-        .catch(() => caches.match(event.request)
-          .then(cached => cached || caches.match('/content/home.html'))
-        )
+        .catch(() => {
+          return caches.match(event.request)
+            .then(cached => cached || caches.match('/content/home.html'));
+        })
     );
   } else {
     event.respondWith(
@@ -64,18 +64,45 @@ self.addEventListener('fetch', event => {
   }
 });
 
-// Обработка push-уведомлений
-self.addEventListener('push', (event) => {
-  let data = { title: 'Новое уведомление', body: '' };
+self.addEventListener('push', event => {
+  let data = { title: 'Новое уведомление', body: '', reminderId: null };
   if (event.data) {
-    data = event.data.json();
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
   }
   const options = {
     body: data.body,
     icon: '/icons/favicon-128x128.png',
-    badge: '/icons/favicon-48x48.png'
+    badge: '/icons/favicon-48x48.png',
+    data: { reminderId: data.reminderId }
   };
+  // Добавляем кнопку "Отложить" только если это напоминание
+  if (data.reminderId) {
+    options.actions = [
+      { action: 'snooze', title: 'Отложить на 5 минут' }
+    ];
+  }
   event.waitUntil(
     self.registration.showNotification(data.title, options)
   );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  const notification = event.notification;
+  const action = event.action;
+
+  if (action === 'snooze') {
+    const reminderId = notification.data.reminderId;
+    // Отправляем запрос на сервер для откладывания
+    event.waitUntil(
+      fetch(`/snooze?reminderId=${reminderId}`, { method: 'POST' })
+        .then(() => notification.close())
+        .catch(err => console.error('Snooze failed: ', err))
+    );
+  } else {
+    notification.close();
+  }
 });
